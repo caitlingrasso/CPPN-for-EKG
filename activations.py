@@ -7,13 +7,16 @@ def sigmoid(x):  # output (0,1)... rescaled sigmoid? What is the time range/scal
     return s
 
 def sin(x):
-    pass
+    return np.sin(x)
 
 def cos(x):
-    pass
+    return np.cos(x)
 
 def relu(x):
     return np.maximum(np.zeros(x.shape),x)
 
 def tanh(x):
-    pass
+    return np.tanh(x)
+
+def identity(x):
+    return x
