@@ -1,8 +1,6 @@
 import numpy as np
 
-# TODO: implement activation functions (sigmoid, sin, cos, tanh, relu)
-
-def sigmoid(x):  # output (0,1)... rescaled sigmoid? What is the time range/scale?
+def sigmoid(x):
     s = 1 / (1 + np.exp(-x))
     return s
 
@@ -19,4 +17,13 @@ def tanh(x):
     return np.tanh(x)
 
 def identity(x):
+    return x
+
+def normalize(x):
+    x -= np.min(x)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        x = x/np.max(x)
+    x = np.nan_to_num(x)
+    x *= 2
+    x -= 1
     return x

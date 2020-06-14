@@ -1,26 +1,64 @@
 import numpy as np
-from activations import sigmoid, sin, cos, tanh, relu, identity
+from activations import sigmoid, sin, cos, tanh, relu, identity, normalize
 
 class CPPN:
 
     activations_list = [sigmoid, sin, cos, tanh, relu]
 
-    def __init__(self, input_size=3, output_size=1, hidden_size=0):
-        self.n_in = input_size
-        self.n_out = output_size
-        self.n_h = hidden_size
+    def __init__(self, inputs=3, outputs=1, fixed=False, n_nodes=15, n_hl=3, n_h=6):
+        self.n_in = inputs
+        self.n_out = outputs
 
-        self.n_x = 2
-        self.n_y = 2
-        self.n_z = 2
+        if fixed:
+            self.model = self.initialize_fixed(n_hl, n_h)
+        else:
+            self.model = self.initialize(n_nodes)
+        self.edge_mask = self.set_mask()
 
-        self.age = 0
-        self.fitness = 0
+    def initialize(self, n_nodes):
+        """generates a random CPPN topology"""
+        #n_nodes = total number of hidden nodes
 
-        self.dense(self.n_in, self.n_out)
+        layers = []
+        input_dim = self.n_in
+
+        while n_nodes > 1:
+            splt = np.random.choice(range(1,n_nodes))
+            layers.append(Dense(input_dim, splt))
+            n_nodes = n_nodes - splt
+            input_dim = splt
+
+        layers.append(Dense(layers[-1].W.shape[1], self.n_out, activation=sigmoid))
+
+        return layers
+
+    def initialize_fixed(self, n_hl, n_h):
+        """generates random CPPN with fixed topology"""
+        #n_hl = number of hidden layers
+        #n_h = number of hidden nodes per layer
+
+        layers = []
+        layers.append(Dense(self.n_in, n_h)) # input layer
+        for i in range(n_hl): # hidden layers
+            layers.append(Dense(n_h, n_h))
+        layers.append(Dense(n_h, self.n_out, activation=sigmoid)) # output layer
+        return layers
+
+    def set_mask(self):
+        """sets binary connections mask for CPPN"""
+
+        connections = []
+        connections.append(np.ones(self.model[0].W.shape)) # fully-connected input layer
+        for i in range(1, len(self.model)-1):
+            connections.append(np.random.randint(0,2, size=self.model[i].W.shape))
+        connections.append(np.ones(self.model[-1].W.shape)) # fully-connected output layer
+        return connections
 
     def get_coordinates(self):
-        """ temporary x, y, z data - will be replaced by the coordinates of cells in simulated heart"""
+        """temporary x, y, z data - will be replaced by the coordinates of cells in simulated heart"""
+        self.n_x = 10
+        self.n_y = 10
+        self.n_z = 10
 
         all_indices = np.indices((self.n_x, self.n_y, self.n_z))
         input_x = all_indices[0]
@@ -31,36 +69,66 @@ class CPPN:
         y_dat = np.reshape(input_y.flatten(), (len(input_y.flatten()), 1))
         z_dat = np.reshape(input_z.flatten(), (len(input_z.flatten()), 1))
 
+        x_dat = normalize(x_dat)
+        y_dat = normalize(y_dat)
+        z_dat = normalize(z_dat)
+
         return np.concatenate((x_dat, y_dat, z_dat), axis=1)
 
-    def dense(self, input_size, output_size):
-        self.W = np.random.standard_normal((input_size, output_size))
-        self.activations = np.random.choice(CPPN.activations_list, output_size)
+    def get_output(self):
+        """executes forward pass of cppn"""
 
-    def build(self):
-        data = self.get_coordinates()
-        y = np.dot(data, self.W)
+        x = self.get_coordinates()
+        for i, layer in enumerate(self.model):
+            x = layer.build(x, self.edge_mask[i])
+        return np.reshape(x, (self.n_x, self.n_y, self.n_z))
 
-        for i in range(len(self.activations)):
-            y[:,i] = self.activations[i](y[:,i])
-
-        return np.reshape(y, (self.n_x, self.n_y, self.n_z))
-
-    #TODO: MUTATION FUNCTIONS (add node, remove node, add edge, remove edge, mutate weights, mutate activation functions)
     def mutate(self):
-        pass
+        """mutation types: add edge, remove edge, mutate weights, mutate activation function"""
+        mut_type = np.random.choice(4)
+        print(mut_type)
+        #TODO: finish mutation functions
 
     def evaluate(self):
-        pass
+        result = self.get_output()
+        print(result)
 
-def main():
-    np.random.seed()
-    cppn = CPPN()
-    output = cppn.build()
-    print(output)
+        # TODO: feed cppn output as input into EKG functions to get a fitness score
 
-if __name__=='__main__':
-    main()
+        # return fitness
+
+    def print(self):
+        print("CPPN SUMMARY:")
+        for i, layer in enumerate(self.model):
+            print("--LAYER", i, "--")
+            print("input_dim:", layer.W.shape[0], ", output_dim:", layer.W.shape[1], ", activation(s):", end=" ")
+            for j, a in enumerate(layer.activations):
+                if j==len(layer.activations)-1:
+                    print(a.__name__)
+                else:
+                    print(a.__name__, end=", ")
+
+class Dense:
+
+    def __init__(self, input_size, output_size, activation=None):
+        """initializes weights/activations for single fully-connected layer of network"""
+
+        self.W = np.random.standard_normal((input_size, output_size))
+        if activation is not None:
+            self.activations = [activation]
+        else:
+            self.activations = np.random.choice(CPPN.activations_list, output_size)
+
+    def build(self, input, edge_mask):
+        """builds single layer"""
+
+        weights = self.W*edge_mask
+
+        y = np.dot(input, weights)
+        for i in range(len(self.activations)):
+            y[:, i] = self.activations[i](y[:, i])
+        return y
+
 
 
 
