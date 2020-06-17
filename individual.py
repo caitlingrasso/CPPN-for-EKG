@@ -5,7 +5,9 @@ from cppn import CPPN
 class Individual:
 
     def __init__(self):
-        self.cppn = CPPN(fixed=True)
+        self.cppn = CPPN(novel=True)
+        self.fitness = 0
+        self.age = 0
 
     def mutate(self):
         self.cppn.mutate()
@@ -17,8 +19,13 @@ class Individual:
         self.cppn.print()
 
 if __name__=='__main__':
-    # np.random.seed(1)
+    # np.random.seed(3)
     ind = Individual()
-    # ind.print()
+
+    ind.print()
     ind.evaluate()
-    # ind.mutate()
+
+    ind.mutate()
+
+    ind.print()
+    ind.evaluate()
