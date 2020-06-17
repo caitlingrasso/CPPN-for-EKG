@@ -107,11 +107,11 @@ class CPPN:
     # -----------------------------------
 
     def mutate_weight(self, mut_std = 0.5):
-        #choose a layer
+        # choose a layer
         i = np.random.choice(len(self.model))
         l = self.model[i]
 
-        #mutate random weight in chosen layer
+        # mutate random weight in chosen layer
         r = np.random.randint(l.W.shape[0])
         c = np.random.randint(l.W.shape[1])
         old_weight = l.W[r,c]
@@ -242,6 +242,9 @@ class CPPN:
         i = np.random.choice(len(self.model) - 1)
         l = self.model[i]
 
+        if l.W.shape[1] == 1: # hidden layer has one node - remove layer?
+            return False
+
         weights = copy.deepcopy(l.W)
         mask = copy.deepcopy(self.edge_mask[i])
         activations = copy.deepcopy(l.activations)
@@ -287,7 +290,7 @@ class CPPN:
         result = self.get_output()
         print(result)
 
-        # TODO: feed cppn output as input into EKG functions to get a fitness score
+        # TODO: feed cppn output as input to EKG functions - return fitness score
 
         # return fitness
 
