@@ -75,7 +75,8 @@ class CPPN:
         x = self.get_coordinates()
         for i, layer in enumerate(self.model):
             x = layer.build(x, self.edge_mask[i])
-        return np.reshape(x, (self.n_x, self.n_y, self.n_z))
+
+        return x
 
     def mutate(self):
         """chooses a random mutation to execute"""

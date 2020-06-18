@@ -6,7 +6,7 @@ from cppn import CPPN
 class Individual:
 
     def __init__(self, ID):
-        self.cppn = CPPN(novel=True)
+        self.cppn = CPPN()
         self.fitness = 0
         self.age = 0
         self.id = ID
@@ -28,7 +28,7 @@ if __name__=='__main__':
 
     ind.print()
 
-    # ind.evaluate()
+    ind.evaluate()
     #
     # ind.mutate()
     #
