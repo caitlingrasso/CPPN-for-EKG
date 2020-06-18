@@ -12,7 +12,7 @@ class AFPO:
     def run(self):
         # evaluate first generation
 
-        # for g in gens:
+        # for g in generations:
             # expand population
             # increase age
             # add random individual
