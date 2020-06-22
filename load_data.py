@@ -18,7 +18,7 @@ f = open('lead_coords.p', 'wb')
 pickle.dump(lead_coords, f)
 f.close()
 
-exit()
+# exit()
 
 # Converting heart coordinates to a numpy array and saving as a pickle file
 
