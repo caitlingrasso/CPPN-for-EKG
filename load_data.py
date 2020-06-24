@@ -1,14 +1,33 @@
+"""loading and saving input data as numpy arrays"""
 import numpy as np
 import pickle
 
-# Converting lead coordinates to a numpy array and saving as a pickle file
-f = open('leadCoords.txt', 'rb')
-lead_list = f.readlines()
+# Lead distances
+
+f = open('leadDistances.txt', 'rb')
+lead_dist_list = f.readlines()
 f.close()
 
-lead_coords = np.zeros((len(lead_list),3), dtype=int)
+lead_distances = np.zeros((len(lead_dist_list), 10), dtype=float)
 
-for i,line in enumerate(lead_list):
+for i,line in enumerate(lead_dist_list):
+    line_as_list = line.split(',')
+    for j in range(len(line_as_list)):
+        lead_distances[i,j] = line_as_list[j]
+
+f = open('lead_distances.p', 'wb')
+pickle.dump(lead_distances, f)
+f.close()
+
+# Lead coordinates
+
+f = open('leadCoords.txt', 'rb')
+lead_coord_list = f.readlines()
+f.close()
+
+lead_coords = np.zeros((len(lead_coord_list),3), dtype=int)
+
+for i,line in enumerate(lead_coord_list):
     coord_list = line.split(',')
     lead_coords[i,0] = int(coord_list[0]) # x
     lead_coords[i, 1] = int(coord_list[1]) # y
@@ -18,9 +37,7 @@ f = open('lead_coords.p', 'wb')
 pickle.dump(lead_coords, f)
 f.close()
 
-# exit()
-
-# Converting heart coordinates to a numpy array and saving as a pickle file
+# Heart coordinates
 
 f = open('HeartCoords.txt', 'rb')
 cell_list = f.readlines()
