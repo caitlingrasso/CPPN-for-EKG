@@ -2,6 +2,24 @@
 import numpy as np
 import pickle
 
+# Calculated12Lead for testing
+f = open('calculated12Lead.txt', 'rb')
+lead12_list = f.readlines()
+f.close()
+
+calculated12lead = np.zeros((len(lead12_list), 12), dtype=float)
+
+for i, line in enumerate(lead12_list):
+    line_as_list = line.split(',')
+    for j in range(len(line_as_list)):
+        calculated12lead[i, j] = line_as_list[j]
+
+f = open('calculated12Lead.p', 'wb')
+pickle.dump(calculated12lead, f)
+f.close()
+
+exit()
+
 # Lead distances
 
 f = open('leadDistances.txt', 'rb')

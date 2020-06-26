@@ -100,7 +100,7 @@ class CPPN:
         elif mut_type == 5:
             type = "remove node"
             done = self.remove_node()
-        print(type, done)
+        # print(type, done)
         return done # true if a mutation was performed, false otherwise
 
     # -----------------------------------
