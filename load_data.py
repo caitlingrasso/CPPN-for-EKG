@@ -18,8 +18,6 @@ f = open('calculated12Lead.p', 'wb')
 pickle.dump(calculated12lead, f)
 f.close()
 
-exit()
-
 # Lead distances
 
 f = open('leadDistances.txt', 'rb')
