@@ -1,7 +1,9 @@
 import numpy as np
 import random
 import copy
+
 from activations import sigmoid, sin, cos, tanh, abs, normalize
+from evaluate_EKG import evaluate_EKG
 
 class CPPN:
 
@@ -288,12 +290,10 @@ class CPPN:
         return True
 
     def evaluate(self):
-        result = self.get_output()
-        print(result)
-
-        # TODO: feed cppn output as input to EKG functions - return fitness score
-
-        # return fitness
+        activations = self.get_output()
+        print(activations)
+        rmse = evaluate_EKG(activations)
+        return rmse
 
     def print(self):
         print("CPPN SUMMARY:")

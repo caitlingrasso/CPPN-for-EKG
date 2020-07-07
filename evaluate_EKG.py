@@ -2,42 +2,34 @@
 
 import numpy as np
 import pickle
+from sklearn.metrics import mean_squared_error
 
-def convert_action_to_charge(activations):
-
-    # testing
-    # a = [5, 2, 3, 10, 15, 11, 3, 2, 1]
-    # activations = np.reshape(a, (len(a), 1))
-
-    pos_charge_dict = {} # empty dictionary - at each time point, tells which cells are excited
-
-    for i in range(1,np.max(activations)+1):
-        pos_charge_dict[i-1] = []
-        for j in range(len(activations)):
-            if activations[j,0] == i:
-                pos_charge_dict[i-1].append(j)
-
-    diPole = get_diPole_matrix(pos_charge_dict, len(activations))
-
-    return diPole
+from util import load_data, normalize, smooth
 
 
-def get_diPole_matrix(pos_charge_dict, n_cells):
-    # diPole matrix = the contribution of each cell's charge at each time step
+def evaluate_EKG(activations):
+    """Calculates root mean squared error between actual EKG and EKG produced from input activation matrix"""
 
-    diPole = np.zeros((n_cells, len(pos_charge_dict)), dtype=float)
+    activations = load_data('data/activation_matrix.p') # temporary
+    lead_distances = load_data('data/lead_distances.p')
+    answerEKG = load_data('data/answerEKG.p')
 
-    for t in range(len(pos_charge_dict)):
-        excited_cells = pos_charge_dict[t]
-        for cell in excited_cells:
-            diPole[cell, t] = 0.5
-            if t!=0:
-                diPole[cell, t-1] = -0.5
+    calculated12Lead = calc_EKG(activations, lead_distances)
 
-    return diPole
+    calculated12Lead = normalize(calculated12Lead)
+    answerEKG = normalize(answerEKG)
+
+    calculated12Lead, answerEKG = match_time_scales(calculated12Lead, answerEKG)
+
+    rmse = mean_squared_error(answerEKG, smooth_data(calculated12Lead), squared=False)
+    # rmse = mean_squared_error(answerEKG, calculated12Lead, squared=False)
+
+    return rmse
 
 
-def calc_EKG(diPole, lead_distances):
+def calc_EKG(activations, lead_distances):
+    """Calculates EKG signals from input activation matrix"""
+    diPole = convert_action_to_charge(activations)
 
     calculated12Lead = np.zeros((diPole.shape[1], 12), dtype=float)
 
@@ -72,26 +64,65 @@ def calc_EKG(diPole, lead_distances):
 
     return calculated12Lead
 
-#TODO: normalize time component
-#TODO: root mean squared correlation between calculated and actual EKG
+def convert_action_to_charge(activations):
+    """Converts activation matrix to positive charge matrix"""
+    pos_charge_dict = {} # empty dictionary - at each time point, tells which cells are excited
+    # key = time step
+    # value = list of indices of cells in the activation matrix that are excited at that time step
 
-f = open('activation_matrix.p', 'rb')
-activations = pickle.load(f)
-f.close()
+    for i in range(1,np.max(activations)+1):
+        pos_charge_dict[i-1] = []
+        for j in range(len(activations)):
+            if activations[j,0] == i:
+                pos_charge_dict[i-1].append(j)
 
-f = open('lead_distances.p', 'rb')
-lead_distances = pickle.load(f)
-f.close()
+    diPole = get_diPole_matrix(pos_charge_dict, len(activations))
 
-f = open('calculated12Lead.p', 'rb')
-calculated12Lead_actual = pickle.load(f)
-f.close()
+    return diPole
 
-diPole = convert_action_to_charge(activations)
-calculated12Lead = calc_EKG(diPole, lead_distances)
+def get_diPole_matrix(pos_charge_dict, n_cells):
+    """produces diPole matrix - the contribution of each cell's charge at each time step"""
 
-print(calculated12Lead[0:9, :])
-print('------------------------------------------------------------------------')
-print(calculated12Lead_actual[0:9, :])
+    diPole = np.zeros((n_cells, len(pos_charge_dict)), dtype=float)
 
-# print(np.allclose(calculated12Lead, calculated12Lead_actual))
+    for t in range(len(pos_charge_dict)):
+        excited_cells = pos_charge_dict[t]
+        for cell in excited_cells:
+            diPole[cell, t] = 0.5
+            if t!=0:
+                diPole[cell, t-1] = -0.5
+
+    return diPole
+
+def match_time_scales(series1, series2):
+    """interpolates shorter time series to match number of samples"""
+    if len(series1) < len(series2):
+        factor = round(len(series2) / len(series1))
+        series1_temp = np.zeros(series2.shape)
+        for i in range(series1.shape[1]):  # number of leads
+            y = series1[:, i]
+            x = np.arange(len(series1))
+            x = x * factor
+            xvals = np.arange(len(series2))
+            series1_temp[:, i] = np.interp(xvals, x, y)
+        return series1_temp, series2
+    elif len(series1) > len(series2):
+        factor = round(len(series1) / len(series2))
+        series2_temp = np.zeros(series1.shape)
+        for i in range(series2.shape[1]):  # number of leads
+            y = series2[:, i]
+            x = np.arange(len(series2))
+            x = x * factor
+            xvals = np.arange(len(series1))
+            series2_temp[:, i] = np.interp(xvals, x, y)
+        return series1, series2_temp
+    else:
+        return series1, series2
+
+def smooth_data(series):
+    """smooths times series data using https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html"""
+    series_smoothed = np.zeros(series.shape)
+    for i in range(series.shape[1]):  # number of leads
+        y = smooth(series[:, i])
+        series_smoothed[:, i] = y[0:len(series)]
+    return series_smoothed
