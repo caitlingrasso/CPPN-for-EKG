@@ -6,9 +6,9 @@ from math import sqrt
 from util import write_to_txt, plot_ekg, load_data, load_txt_file
 from evaluate_EKG import evaluate_EKG
 
-rmse = evaluate_EKG(0)
-print(rmse)
-exit()
+# rmse = evaluate_EKG(0)
+# print(rmse)
+# exit()
 
 f = open('data/calculated12Lead_csg.p', 'rb')
 calculated12Lead = pickle.load(f)
@@ -56,6 +56,16 @@ for i in range(answerEKG_normalized.shape[1]): #number of leads
     x = x*factor
     xvals = np.arange(len(calculated12Lead_normalized))
     answerEKG_interp[:,i] = np.interp(xvals, x, y)
+
+# rmse_sum = 0
+# for i in range(answerEKG_interp.shape[1]):
+#     temp = mean_squared_error(answerEKG_interp[:, i], calculated12Lead_normalized[:, i], squared=False)
+#     rmse_sum += temp
+#     print(temp)
+# rmse = rmse_sum/(answerEKG_interp.shape[1])
+#
+# print('RMSE:', rmse)
+# exit()
 
 rmse = mean_squared_error(answerEKG_interp, calculated12Lead_normalized, squared=False)
 print("Root mean square error:", rmse)
