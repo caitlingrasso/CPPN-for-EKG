@@ -3,6 +3,8 @@
 import numpy as np
 from copy import deepcopy
 import operator
+import argparse
+import sys
 
 from genome import Genome
 
@@ -152,3 +154,20 @@ class AFPO:
         for i in pf:
             pf_inds.append(self.population[i])
         return pf_inds
+
+if __name__=='__main__':
+
+    def parse_args(args):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--gens', default=10, type=int)
+        parser.add_argument('--popsize', default=5, type=int)
+        return parser.parse_args(args)
+
+    args = sys.argv[1:]
+    args = parse_args(args)
+
+    afpo = AFPO(gens=args.gens, popsize=args.popsize)
+    best, fits_per_gen = afpo.run()
+
+    print(best.fitness)
+    best.CPPN_summary()
