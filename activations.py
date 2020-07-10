@@ -30,3 +30,6 @@ def normalize(x):
     x *= 2
     x -= 1
     return x
+
+def rescaled_positive_sigmoid(x, x_min=0, x_max=500):
+    return (x_max - x_min) * sigmoid(x) + x_min

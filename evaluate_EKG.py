@@ -4,32 +4,27 @@ import numpy as np
 import pickle
 from sklearn.metrics import mean_squared_error
 
-from util import load_data, normalize, smooth
+from util import load_data, normalize, smooth, pickle_file
 
-
-def evaluate_EKG(activations):
+def evaluate_EKG(activations, lead_distances, answerEKG):
     """Calculates root mean squared error between actual EKG and EKG produced from input activation matrix"""
-
-    activations = load_data('data/activation_matrix.p') # temporary
-    lead_distances = load_data('data/lead_distances.p')
-    answerEKG = load_data('data/answerEKG.p')
 
     calculated12Lead = calc_EKG(activations, lead_distances)
 
     calculated12Lead = normalize(calculated12Lead)
-    answerEKG = normalize(answerEKG)
 
     calculated12Lead, answerEKG = match_time_scales(calculated12Lead, answerEKG)
 
     rmse = mean_squared_error(answerEKG, smooth_data(calculated12Lead), squared=False)
-    # rmse = mean_squared_error(answerEKG, calculated12Lead, squared=False)
+    # rmse = mean_squared_error(answerEKG, calculated12Lead, squared=False)  # without smoothing data
 
     return rmse
 
 
 def calc_EKG(activations, lead_distances):
     """Calculates EKG signals from input activation matrix"""
-    diPole = convert_action_to_charge(activations)
+
+    diPole = convert_activation_to_charge(activations)
 
     calculated12Lead = np.zeros((diPole.shape[1], 12), dtype=float)
 
@@ -64,13 +59,24 @@ def calc_EKG(activations, lead_distances):
 
     return calculated12Lead
 
+def convert_activation_to_charge(activations):
+    """Converts activation matrix to diPole matrix - each cell's charge at each time step"""
+    activations = activations.astype(int) - 1
+    cells = np.indices(activations.shape)
+    diPole = np.zeros((len(activations), np.max(activations.astype(int))+1), dtype=float)
+
+    diPole[cells[0][activations>=0], activations[activations>=0]] = 0.5
+    diPole[cells[0][activations>0], activations[activations>0]-1] = -0.5
+
+    return diPole
+
 def convert_action_to_charge(activations):
     """Converts activation matrix to positive charge matrix"""
     pos_charge_dict = {} # empty dictionary - at each time point, tells which cells are excited
     # key = time step
     # value = list of indices of cells in the activation matrix that are excited at that time step
 
-    for i in range(1,np.max(activations)+1):
+    for i in range(1,int(np.max(activations))+1):
         pos_charge_dict[i-1] = []
         for j in range(len(activations)):
             if activations[j,0] == i:

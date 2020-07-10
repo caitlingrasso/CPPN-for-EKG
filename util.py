@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-def plot_ekg(data):
+def plot_ekg(data, save=False, filename='test.png'):
     """Plot EKG"""
     fig, axs = plt.subplots(3,4, figsize=[15,10])
 
@@ -43,7 +43,10 @@ def plot_ekg(data):
     axs[2, 3].plot(data[:, 11])
     axs[2, 3].set_title('V6')
 
-    plt.show()
+    if not save:
+        plt.show()
+    else:
+        plt.savefig(filename, dpi=300)
 
 
 def write_to_txt(calculated12Lead, filename):
@@ -78,6 +81,11 @@ def load_txt_file(filename):
     save_fn = filename[0:len(filename)-4] + '.p'
 
     f = open(save_fn, 'wb')
+    pickle.dump(data, f)
+    f.close()
+
+def pickle_file(data, filename):
+    f = open(filename, 'wb')
     pickle.dump(data, f)
     f.close()
 

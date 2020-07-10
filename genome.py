@@ -2,6 +2,8 @@
 import numpy as np
 
 from cppn import CPPN
+from evaluate_EKG import calc_EKG
+from util import plot_ekg, load_data
 
 class Genome:
 
@@ -15,8 +17,8 @@ class Genome:
         self.cppn.mutate()
 
     def evaluate(self):
-        # self.fitness = self.cppn.evaluate()
-        self.fitness = np.random.randint(20)
+        self.fitness = self.cppn.evaluate()
+        # self.fitness = np.random.randint(20)
 
     def CPPN_summary(self):
         self.cppn.print()
@@ -28,9 +30,13 @@ class Genome:
 
         if self.age == other.age and self.fitness == other.fitness:
             return self.id > other.id
-        elif self.age <= other.age and self.fitness >= other.fitness:
+        elif self.age <= other.age and self.fitness <= other.fitness:
             return True
         else:
             return False
 
+    def plot_EKG(self, save=False, filename='test.png'):
+        activations = self.cppn.get_output()
+        lead_distances = load_data('data/lead_distances.p')
 
+        plot_ekg(calc_EKG(activations, lead_distances), save, filename)

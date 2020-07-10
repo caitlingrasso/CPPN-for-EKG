@@ -76,7 +76,7 @@ class AFPO:
         p2 = np.random.randint(self.target_size)
         while p1 == p2:
             p2 = np.random.randint(self.target_size)
-        if self.population[p1].fitness > self.population[p2].fitness:
+        if self.population[p1].fitness < self.population[p2].fitness:
             return p1
         else:
             return p2
@@ -127,7 +127,7 @@ class AFPO:
 
     def find_best(self):
         """Returns individual in population with the highest fitness"""
-        sorted_pop = sorted(self.population.values(), key=operator.attrgetter('fitness'), reverse=True)
+        sorted_pop = sorted(self.population.values(), key=operator.attrgetter('fitness'), reverse=False)
         return sorted_pop[0]
 
     def find_pareto_front(self):

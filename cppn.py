@@ -2,12 +2,16 @@ import numpy as np
 import random
 import copy
 
-from activations import sigmoid, sin, cos, tanh, abs, normalize
+from activations import sigmoid, sin, cos, tanh, abs, normalize, rescaled_positive_sigmoid
 from evaluate_EKG import evaluate_EKG
+from util import load_data, normalize
 
 class CPPN:
 
     activations_list = [sigmoid, sin, cos, tanh, abs]
+    heart_coordinates = load_data('data/HeartCoords.p')
+    lead_distances = load_data('data/lead_distances.p')
+    answer_EKG = normalize(load_data('data/answerEKG.p'))
 
     def __init__(self, inputs=3, outputs=1, novel=False, n_nodes=15):
         self.n_in = inputs
@@ -18,7 +22,7 @@ class CPPN:
             self.model = self.novel_individual(n_nodes=n_nodes)
             self.edge_mask = self.set_mask()
         else:
-            self.model = [Dense(self.n_in, self.n_out, activation=sigmoid)]
+            self.model = [Dense(self.n_in, self.n_out, activation=rescaled_positive_sigmoid)]
             self.edge_mask = [np.ones((self.n_in, self.n_out))]
 
     def novel_individual(self, n_nodes):
@@ -36,7 +40,7 @@ class CPPN:
             if input_dim==1 and n_nodes==2:
                 n_nodes=0
 
-        layers.append(Dense(layers[-1].W.shape[1], self.n_out, activation=sigmoid))
+        layers.append(Dense(layers[-1].W.shape[1], self.n_out, activation=rescaled_positive_sigmoid))
 
         return layers
 
@@ -50,31 +54,11 @@ class CPPN:
         connections.append(np.ones(self.model[-1].W.shape)) # fully-connected output layer
         return connections
 
-    def get_coordinates(self):
-        """temporary x, y, z data - will be replaced by the coordinates of cells in simulated heart"""
-        self.n_x = 2
-        self.n_y = 2
-        self.n_z = 2
-
-        all_indices = np.indices((self.n_x, self.n_y, self.n_z))
-        input_x = all_indices[0]
-        input_y = all_indices[1]
-        input_z = all_indices[2]
-
-        x_dat = np.reshape(input_x.flatten(), (len(input_x.flatten()),1))
-        y_dat = np.reshape(input_y.flatten(), (len(input_y.flatten()), 1))
-        z_dat = np.reshape(input_z.flatten(), (len(input_z.flatten()), 1))
-
-        x_dat = normalize(x_dat)
-        y_dat = normalize(y_dat)
-        z_dat = normalize(z_dat)
-
-        return np.concatenate((x_dat, y_dat, z_dat), axis=1)
-
     def get_output(self):
         """executes forward pass of cppn"""
 
-        x = self.get_coordinates()
+        x = CPPN.heart_coordinates
+
         for i, layer in enumerate(self.model):
             x = layer.build(x, self.edge_mask[i])
 
@@ -83,13 +67,16 @@ class CPPN:
     def mutate(self):
         """chooses a random mutation to execute"""
 
-        mut_type = np.random.choice(6)
+        mut_type = np.random.choice(2)
+
         if mut_type == 0:
             type = "mutate weight"
             done = self.mutate_weight()
         elif mut_type == 1:
             type = "mutate activation"
             done = self.mutate_activations()
+
+        # Not necessary
         elif mut_type == 2:
             type = "add edge"
             done = self.add_edge()
@@ -102,6 +89,7 @@ class CPPN:
         elif mut_type == 5:
             type = "remove node"
             done = self.remove_node()
+
         # print(type, done)
         return done # true if a mutation was performed, false otherwise
 
@@ -291,8 +279,7 @@ class CPPN:
 
     def evaluate(self):
         activations = self.get_output()
-        print(activations)
-        rmse = evaluate_EKG(activations)
+        rmse = evaluate_EKG(activations, CPPN.lead_distances, CPPN.answer_EKG)
         return rmse
 
     def print(self):
