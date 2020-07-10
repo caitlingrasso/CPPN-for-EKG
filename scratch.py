@@ -11,9 +11,17 @@ from afpo import AFPO
 from cppn import CPPN
 from genome import Genome
 
+
+# Loading from text file example
+load_txt_file('data/leadDistances.txt')
+
+# to verify that data was loaded correctly...
+leadDistances = load_data('data/leadDistances.p')
+print(leadDistances)
+
 # Generating random cppns
-# cppn = CPPN(novel=True)
-# cppn.print()
+cppn = CPPN(novel=True)
+cppn.print()
 
 # Test afpo run
 start_time = time.time()
