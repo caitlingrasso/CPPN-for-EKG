@@ -11,4 +11,4 @@ Evolving CPPNs with AFPO to paint activation sequences on simulated heart cells.
 
 **util.py** - helper functions to load and write data, plot EKGs, normalize and smooth data. 
 
-**scratch.py** - (temp) examples to run to test different parts of the code. 
+**scratch.py** - (temp) examples to run/test different parts of the code. 
