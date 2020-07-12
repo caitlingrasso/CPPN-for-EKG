@@ -61,44 +61,46 @@ def calc_EKG(activations, lead_distances):
 
 def convert_activation_to_charge(activations):
     """Converts activation matrix to diPole matrix - each cell's charge at each time step"""
-    activations = activations.astype(int) - 1
+    # vectorized version of the below two functions
+
+    activations = activations.astype(int) - 1 # python indices start at 0
     cells = np.indices(activations.shape)
-    diPole = np.zeros((len(activations), np.max(activations.astype(int))+1), dtype=float)
+    diPole = np.zeros((len(activations), np.max(activations)+1), dtype=float)
 
     diPole[cells[0][activations>=0], activations[activations>=0]] = 0.5
     diPole[cells[0][activations>0], activations[activations>0]-1] = -0.5
 
     return diPole
 
-def convert_action_to_charge(activations):
-    """Converts activation matrix to positive charge matrix"""
-    pos_charge_dict = {} # empty dictionary - at each time point, tells which cells are excited
-    # key = time step
-    # value = list of indices of cells in the activation matrix that are excited at that time step
-
-    for i in range(1,int(np.max(activations))+1):
-        pos_charge_dict[i-1] = []
-        for j in range(len(activations)):
-            if activations[j,0] == i:
-                pos_charge_dict[i-1].append(j)
-
-    diPole = get_diPole_matrix(pos_charge_dict, len(activations))
-
-    return diPole
-
-def get_diPole_matrix(pos_charge_dict, n_cells):
-    """produces diPole matrix - the contribution of each cell's charge at each time step"""
-
-    diPole = np.zeros((n_cells, len(pos_charge_dict)), dtype=float)
-
-    for t in range(len(pos_charge_dict)):
-        excited_cells = pos_charge_dict[t]
-        for cell in excited_cells:
-            diPole[cell, t] = 0.5
-            if t!=0:
-                diPole[cell, t-1] = -0.5
-
-    return diPole
+# def convert_activation_to_charge(activations):
+#     """Converts activation matrix to positive charge matrix"""
+#     pos_charge_dict = {} # empty dictionary - at each time point, tells which cells are excited
+#     # key = time step
+#     # value = list of indices of cells in the activation matrix that are excited at that time step
+#
+#     for i in range(1,int(np.max(activations))+1):
+#         pos_charge_dict[i-1] = []
+#         for j in range(len(activations)):
+#             if activations[j,0] == i:
+#                 pos_charge_dict[i-1].append(j)
+#
+#     diPole = get_diPole_matrix(pos_charge_dict, len(activations))
+#
+#     return diPole
+#
+# def get_diPole_matrix(pos_charge_dict, n_cells):
+#     """produces diPole matrix - the contribution of each cell's charge at each time step"""
+#
+#     diPole = np.zeros((n_cells, len(pos_charge_dict)), dtype=float)
+#
+#     for t in range(len(pos_charge_dict)):
+#         excited_cells = pos_charge_dict[t]
+#         for cell in excited_cells:
+#             diPole[cell, t] = 0.5
+#             if t!=0:
+#                 diPole[cell, t-1] = -0.5
+#
+#     return diPole
 
 def match_time_scales(series1, series2):
     """interpolates shorter time series to match number of samples"""
