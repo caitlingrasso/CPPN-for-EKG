@@ -43,9 +43,10 @@ class AFPO:
         self.print_best(0)
 
     def perform_one_generation(self, g):
+        self.increase_age()
         children = self.generate_children()
         children = self.inject(children)
-        self.evaluate(children)
+        children = self.evaluate(children)
         self.extend(children)
         self.reduce()
         self.print_best(g)
@@ -61,6 +62,10 @@ class AFPO:
         best = self.find_best()
         best.print()
         print()
+
+    def increase_age(self):
+        for i in self.population:
+            self.population[i].age += 1
 
     def generate_children(self):
         children = []
@@ -86,6 +91,7 @@ class AFPO:
     def evaluate(self, population):
         for i in range(len(population)):
             population[i].evaluate()
+        return population
 
     def inject(self, children):
         """Adds random individual to population"""
